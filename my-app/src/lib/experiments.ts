@@ -4,7 +4,7 @@
  * Research-grade experiment configurations for classical EM phenomena
  */
 
-import { Source, Obstacle } from '../maxwell-solver';
+import type { Source, Obstacle } from './maxwell-solver';
 
 export interface ExperimentPreset {
   id: string;

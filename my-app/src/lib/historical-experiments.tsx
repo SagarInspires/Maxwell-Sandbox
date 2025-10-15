@@ -4,7 +4,7 @@
  * Classic experiments that established the foundations of electromagnetic theory
  */
 
-import { Source, Obstacle } from './maxwell-solver';
+import type { Source, Obstacle } from './maxwell-solver';
 
 export interface HistoricalExperiment {
   id: string;

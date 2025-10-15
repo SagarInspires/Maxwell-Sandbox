@@ -1,4 +1,12 @@
 {
+  "name": "maxwell-sandbox-root",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd my-app && npm run dev",
+    "dev": "cd my-app && npm run dev",
+    "install:all": "cd my-app && npm install"
+  },
   "devDependencies": {
     "@types/node": "^24.7.2"
   },

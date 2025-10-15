@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { getExperimentsChronologically, HistoricalExperiment } from '@/lib/historical-experiments';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { ScrollArea } from './ui/scroll-area';
+// If Badge is a default export:
+import { Badge } from './ui/badge'
+
+// Or, if the correct named export is 'BadgeComponent' (replace with actual name):
+// import { BadgeComponent as Badge } from './ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { getExperimentsChronologically } from '../lib/historical-experiments';
+import type { HistoricalExperiment } from '../lib/historical-experiments';
 import { Play, Info, Calendar, User, Award, BookOpen } from 'lucide-react';
 
 interface ExperimentTimelineProps {

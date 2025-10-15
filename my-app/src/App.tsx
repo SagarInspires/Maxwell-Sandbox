@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { MaxwellSolver, Source, Obstacle } from '@/lib/maxwell-solver';
-import { SimulationCanvas } from '@/components/SimulationCanvas';
-import { ControlPanel } from '@/components/ControlPanel';
-import { MetricsPanel } from '@/components/MetricsPanel';
-import { Toolbar } from '@/components/Toolbar';
-import { getExperimentById } from '@/lib/experiments';
-import { getHistoricalExperimentById } from '@/lib/historical-experiments';
+import { MaxwellSolver } from './lib/maxwell-solver';
+import type { Source } from './lib/maxwell-solver';
+import type { Obstacle } from './lib/maxwell-solver';
+import { SimulationCanvas } from './components/SimulationCanvas';
+import { ControlPanel } from './components/ControlPanel';
+import { MetricsPanel } from './components/MetricsPanel';
+import { Toolbar } from './components/Toolbar';
+import { getExperimentById } from './lib/experiments';
+import { getHistoricalExperimentById } from './lib/historical-experiments';
 import { toast } from 'sonner';
 
 /**

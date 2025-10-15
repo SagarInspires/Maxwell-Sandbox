@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MaxwellSolver } from '@/lib/maxwell-solver';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { MaxwellSolver } from '../lib/maxwell-solver';
 import { Activity, Zap, TrendingUp, Waves } from 'lucide-react';
 
 interface MetricsPanelProps {

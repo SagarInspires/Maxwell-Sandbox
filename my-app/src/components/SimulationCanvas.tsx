@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { MaxwellSolver, Source, Obstacle } from '@/lib/maxwell-solver';
+import { MaxwellSolver } from '../lib/maxwell-solver';
 
 interface SimulationCanvasProps {
   isPlaying: boolean;

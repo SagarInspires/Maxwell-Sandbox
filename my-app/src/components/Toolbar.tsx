@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from './ui/button';
 import { 
   Play, 
   Pause, 
@@ -15,9 +15,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+} from "./ui/select";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 interface ToolbarProps {
   isPlaying: boolean;
