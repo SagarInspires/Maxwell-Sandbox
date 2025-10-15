@@ -39,7 +39,7 @@ export function ExperimentTimeline({ onLoadExperiment }: ExperimentTimelineProps
   };
 
   return (
-    <Card className="bg-muted/50 h-full">
+    <Card className="bg-muted/50 h-auto md:h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
@@ -52,8 +52,8 @@ export function ExperimentTimeline({ onLoadExperiment }: ExperimentTimelineProps
         </div>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[calc(100vh-12rem)]">
-          <div className="space-y-3 pr-4">
+        <ScrollArea className="h-[60vh] md:h-[calc(100vh-12rem)]">
+          <div className="space-y-3 pr-6">
             {experiments.map((experiment, index) => (
               <div key={experiment.id} className="relative">
                 {/* Timeline connector line */}
@@ -61,7 +61,7 @@ export function ExperimentTimeline({ onLoadExperiment }: ExperimentTimelineProps
                   <div className="absolute left-[19px] top-12 w-0.5 h-full bg-border z-0" />
                 )}
                 
-                <div className="flex gap-3 relative z-10">
+                <div className="flex gap-3 relative z-10 min-w-0">
                   {/* Timeline dot */}
                   <div className="flex-shrink-0 mt-1">
                     <div className="w-10 h-10 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center font-mono text-xs font-bold text-primary">
@@ -70,38 +70,36 @@ export function ExperimentTimeline({ onLoadExperiment }: ExperimentTimelineProps
                   </div>
                   
                   {/* Experiment card */}
-                  <Card className="flex-1 bg-background/50 hover:bg-background/80 transition-colors border-l-2 border-primary/50">
+                  <Card className="flex-1 min-w-0 bg-background/50 hover:bg-background/80 transition-colors border-l-2 border-primary/50">
                     <CardContent className="p-4">
                       <div className="space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-sm leading-tight">
-                              {experiment.name}
-                            </h3>
-                            <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                              <User className="w-3 h-3" />
-                              <span>{experiment.scientist}</span>
-                              <span className="text-[10px] ml-1">({experiment.year})</span>
-                            </div>
-                          </div>
-                          
-                          <Badge className={`text-[10px] ${categoryColors[experiment.category]}`}>
+                        <div className="flex flex-col gap-1 min-w-0">
+                          <h3 className="font-semibold text-sm leading-tight break-words">
+                            {experiment.name}
+                          </h3>
+                          <Badge className={`text-[10px] mt-1 self-start sm:self-end px-2 py-0.5 rounded-full ${categoryColors[experiment.category]}`}
+                            style={{letterSpacing: '0.01em'}}>
                             {categoryLabels[experiment.category]}
                           </Badge>
+                          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground flex-wrap">
+                            <User className="w-3 h-3" />
+                            <span>{experiment.scientist}</span>
+                            <span className="text-[10px] ml-1">({experiment.year})</span>
+                          </div>
                         </div>
                         
-                        <p className="text-xs text-muted-foreground line-clamp-2">
+                        <p className="text-xs text-muted-foreground">
                           {experiment.description}
                         </p>
                         
-                        <div className="flex gap-2 pt-1">
+                        <div className="flex gap-2 pt-1 flex-col sm:flex-row">
                           <Button
                             size="sm"
                             onClick={() => {
                               onLoadExperiment(experiment.id);
                               setSelectedExperiment(experiment);
                             }}
-                            className="h-7 text-xs flex items-center gap-1 flex-1"
+                            className="h-7 text-xs flex items-center gap-1 w-full sm:w-auto"
                           >
                             <Play className="w-3 h-3" />
                             Simulate
@@ -112,7 +110,7 @@ export function ExperimentTimeline({ onLoadExperiment }: ExperimentTimelineProps
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 px-2"
+                                className="h-7 px-2 w-full sm:w-auto"
                                 onClick={() => setSelectedExperiment(experiment)}
                               >
                                 <Info className="w-3 h-3" />

@@ -301,8 +301,7 @@ export function SimulationCanvas({
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full bg-gradient-to-br from-background to-muted rounded-lg overflow-hidden border border-border"
-      style={{ minHeight: '600px' }}
+      className="w-full h-full bg-gradient-to-br from-background to-muted rounded-lg overflow-hidden border border-border min-h-[320px] sm:min-h-[420px] md:min-h-[520px] lg:min-h-[600px]"
     />
   );
 }
