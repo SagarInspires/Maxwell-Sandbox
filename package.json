@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "@types/node": "^24.7.2"
+  },
+  "dependencies": {
+    "@radix-ui/react-accordion": "^1.2.12",
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^0.545.0"
+  }
+}
