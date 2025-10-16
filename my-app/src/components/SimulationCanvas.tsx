@@ -49,20 +49,26 @@ export function SimulationCanvas({
     scene.background = new THREE.Color(0x0a0a0f);
     sceneRef.current = scene;
     
-    // Camera setup (orthographic for 2D view)
+    // Camera setup (orthographic for perfect 2D rectangular view)
     const params = solver.getParams();
     const aspect = width / height;
-    const frustumSize = params.nx;
+    // Use ny (height) as base for frustum to ensure proper rectangular display
+    const frustumHeight = params.ny;
+    const frustumWidth = frustumHeight * aspect;
+    
     const camera = new THREE.OrthographicCamera(
-      -frustumSize * aspect / 2,
-      frustumSize * aspect / 2,
-      frustumSize / 2,
-      -frustumSize / 2,
+      -frustumWidth / 2,
+      frustumWidth / 2,
+      frustumHeight / 2,
+      -frustumHeight / 2,
       0.1,
       1000
     );
+    // Position camera directly above center, looking straight down
     camera.position.set(params.nx / 2, params.ny / 2, 100);
     camera.lookAt(params.nx / 2, params.ny / 2, 0);
+    camera.up.set(0, 1, 0); // Ensure camera is perfectly upright (Y-axis is up)
+    camera.rotation.set(0, 0, 0); // No rotation at all
     cameraRef.current = camera;
     
     // Renderer setup
@@ -72,12 +78,18 @@ export function SimulationCanvas({
     container.appendChild(renderer.domElement);
     rendererRef.current = renderer;
     
-    // Controls (orbit for 3D exploration)
+    // Controls - strict 2D mode (no rotation allowed)
     const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableRotate = false; // 2D mode
-    controls.enablePan = true;
-    controls.enableZoom = true;
+    controls.enableRotate = false; // Prevent rotation
+    controls.enablePan = true; // Allow panning
+    controls.enableZoom = true; // Allow zoom
     controls.zoomSpeed = 0.5;
+    controls.screenSpacePanning = true; // Pan in screen space (more intuitive for 2D)
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.PAN,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN
+    };
     controlsRef.current = controls;
     
     // Create field visualization plane
@@ -133,6 +145,7 @@ export function SimulationCanvas({
     
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(params.nx / 2, params.ny / 2, 0);
+    mesh.rotation.set(0, 0, 0); // Ensure no rotation
     scene.add(mesh);
     meshRef.current = mesh;
     
@@ -141,9 +154,11 @@ export function SimulationCanvas({
     scene.add(vectorGroup);
     vectorGroupRef.current = vectorGroup;
     
-    // Grid helper
+    // Simple 2D grid overlay (no 3D perspective effect)
     const gridHelper = new THREE.GridHelper(params.nx, 20, 0x333366, 0x222244);
-    gridHelper.rotation.x = Math.PI / 2;
+    gridHelper.rotation.x = Math.PI / 2; // Flat on XY plane
+    gridHelper.rotation.y = 0;
+    gridHelper.rotation.z = 0;
     gridHelper.position.set(params.nx / 2, params.ny / 2, -0.5);
     scene.add(gridHelper);
     
@@ -173,10 +188,13 @@ export function SimulationCanvas({
       setDimensions({ width, height });
       
       const aspect = width / height;
-      camera.left = -frustumSize * aspect / 2;
-      camera.right = frustumSize * aspect / 2;
-      camera.top = frustumSize / 2;
-      camera.bottom = -frustumSize / 2;
+      const frustumHeight = params.ny;
+      const frustumWidth = frustumHeight * aspect;
+      
+      camera.left = -frustumWidth / 2;
+      camera.right = frustumWidth / 2;
+      camera.top = frustumHeight / 2;
+      camera.bottom = -frustumHeight / 2;
       camera.updateProjectionMatrix();
       
       renderer.setSize(width, height);
@@ -301,7 +319,8 @@ export function SimulationCanvas({
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full bg-gradient-to-br from-background to-muted rounded-lg overflow-hidden border border-border min-h-[320px] sm:min-h-[420px] md:min-h-[520px] lg:min-h-[600px]"
+      className="w-full h-full bg-gradient-to-br from-background to-muted rounded-lg border border-border"
+      style={{ minHeight: '500px', aspectRatio: '5/3' }}
     />
   );
 }

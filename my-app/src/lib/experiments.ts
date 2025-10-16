@@ -23,16 +23,27 @@ export const EXPERIMENT_PRESETS: ExperimentPreset[] = [
   {
     id: 'double-slit',
     name: 'Double-Slit Interference',
-    description: 'Classic wave interference through two slits showing interference pattern',
+    description: 'Classic wave interference through two slits showing interference pattern with observation screens',
     category: 'wave',
     sources: [
-      { type: 'plane-wave', x: 30, y: 75, frequency: 5e9, amplitude: 1.0, phase: 0 }
+      { type: 'plane-wave', x: 30, y: 75, frequency: 6e9, amplitude: 1.2, phase: 0 }
     ],
     obstacles: [
-      { x: 80, y: 40, width: 3, height: 20, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
-      { x: 80, y: 65, width: 3, height: 5, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
-      { x: 80, y: 80, width: 3, height: 5, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
-      { x: 80, y: 95, width: 3, height: 20, material: { epsilon: 1, mu: 1, sigma: 1e7 } }
+      // Slit barrier (A)
+      // Top barrier
+      { x: 90, y: 30, width: 4, height: 30, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
+      // Upper slit opening at y=60-67 (7 units wide)
+      // Middle barrier between slits
+      { x: 90, y: 67, width: 4, height: 11, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
+      // Lower slit opening at y=78-85 (7 units wide)
+      // Bottom barrier
+      { x: 90, y: 85, width: 4, height: 35, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
+      
+      // Observation screen B (near field - shows wave diffraction)
+      { x: 120, y: 30, width: 1, height: 90, material: { epsilon: 2.0, mu: 1, sigma: 0.01 } },
+      
+      // Observation screen C (far field - shows interference pattern)
+      { x: 150, y: 30, width: 1, height: 90, material: { epsilon: 2.0, mu: 1, sigma: 0.01 } }
     ],
     recommendedSettings: {
       fieldMode: 'Intensity',

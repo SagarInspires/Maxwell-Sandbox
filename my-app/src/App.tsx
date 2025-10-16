@@ -31,12 +31,12 @@ function App() {
   
   // Initialize solver
   useEffect(() => {
-    // Grid parameters (2D simulation)
+    // Grid parameters (2D simulation) - Rectangular canvas for double-slit
     const wavelength = 0.06; // 6 cm at 5 GHz
     const dx = wavelength / 20; // 20 points per wavelength
     const dy = dx;
-    const nx = 200; // Grid points
-    const ny = 150;
+    const nx = 250; // Grid points (wider for rectangular view)
+    const ny = 150; // Grid points (height)
     
     // CFL condition: dt < dx / (c * sqrt(2))
     const c = 299792458; // Speed of light
@@ -307,8 +307,8 @@ function App() {
           onLoadHistoricalExperiment={handleLoadHistoricalExperiment}
         />
         
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 p-3 sm:p-4">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="flex-1 p-3 sm:p-4 flex items-center justify-center">
             <SimulationCanvas
               isPlaying={isPlaying}
               solver={solver}

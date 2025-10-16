@@ -131,24 +131,35 @@ export const HISTORICAL_EXPERIMENTS: HistoricalExperiment[] = [
     name: "Young's Double-Slit Experiment",
     year: 1801,
     scientist: 'Thomas Young',
-    description: 'Demonstrated interference and wave nature of light',
+    description: 'Demonstrated interference and wave nature of light with observation screens',
     significance: 'Definitive proof that light behaves as a wave (not just particles). Showed interference patterns from coherent sources. Later extended to quantum mechanics showing wave-particle duality.',
     category: 'optics',
     sources: [
-      { type: 'plane-wave', x: 30, y: 75, frequency: 5e14, amplitude: 1.0, phase: 0 }
+      { type: 'plane-wave', x: 30, y: 75, frequency: 6e9, amplitude: 1.2, phase: 0 }
     ],
     obstacles: [
-      { x: 80, y: 40, width: 3, height: 25, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
-      { x: 80, y: 68, width: 3, height: 4, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
-      { x: 80, y: 77, width: 3, height: 4, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
-      { x: 80, y: 86, width: 3, height: 25, material: { epsilon: 1, mu: 1, sigma: 1e7 } }
+      // Slit barrier (A)
+      // Top barrier
+      { x: 90, y: 30, width: 4, height: 30, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
+      // Upper slit opening at y=60-67 (7 units wide)
+      // Middle barrier between slits (11 units - creates proper slit separation)
+      { x: 90, y: 67, width: 4, height: 11, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
+      // Lower slit opening at y=78-85 (7 units wide)
+      // Bottom barrier
+      { x: 90, y: 85, width: 4, height: 35, material: { epsilon: 1, mu: 1, sigma: 1e7 } },
+      
+      // Observation screen B (near field - shows wave diffraction and initial interference)
+      { x: 120, y: 30, width: 1, height: 90, material: { epsilon: 2.0, mu: 1, sigma: 0.01 } },
+      
+      // Observation screen C (far field - shows fully developed interference fringes)
+      { x: 150, y: 30, width: 1, height: 90, material: { epsilon: 2.0, mu: 1, sigma: 0.01 } }
     ],
     recommendedSettings: {
       fieldMode: 'Intensity',
       showVectors: false
     },
-    instructions: 'Coherent light through two slits creates interference fringes. Bright and dark bands show wave superposition.',
-    physicalSetup: 'Monochromatic light source, opaque barrier with two narrow slits, observation screen'
+    instructions: 'Coherent light through two narrow slits creates interference fringes. Screen B shows near-field diffraction, Screen C shows far-field interference pattern with bright and dark bands demonstrating wave superposition. The pattern demonstrates constructive (bright) and destructive (dark) interference.',
+    physicalSetup: 'Monochromatic light source (sunlight filtered through colored glass), opaque barrier with two narrow slits separated by ~1mm, observation screens at different distances to show pattern development'
   },
   {
     id: 'millikan-oil-drop',
