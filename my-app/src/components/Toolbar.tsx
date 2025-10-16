@@ -45,8 +45,8 @@ export function Toolbar({
   onExport
 }: ToolbarProps) {
   return (
-    <div className="h-16 bg-card border-b border-border flex items-center justify-between px-6">
-      <div className="flex items-center gap-4">
+    <div className="min-h-16 bg-card border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-6 py-3">
+      <div className="flex items-center gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
             <Layers className="w-5 h-5 text-white" />
@@ -57,7 +57,7 @@ export function Toolbar({
           </div>
         </div>
         
-        <div className="h-8 w-px bg-border mx-2" />
+  <div className="hidden sm:block h-8 w-px bg-border mx-2" />
         
         <div className="flex items-center gap-2">
           <Button
@@ -86,7 +86,7 @@ export function Toolbar({
         </div>
       </div>
       
-      <div className="flex items-center gap-6">
+  <div className="flex flex-wrap items-center gap-3 sm:gap-6">
         <div className="flex items-center gap-3">
           <Label htmlFor="field-mode" className="text-xs text-muted-foreground">
             Field Mode

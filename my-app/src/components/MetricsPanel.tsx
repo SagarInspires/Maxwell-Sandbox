@@ -73,8 +73,8 @@ export function MetricsPanel({ solver, isPlaying }: MetricsPanelProps) {
   };
   
   return (
-    <div className="w-80 h-full bg-card border-l border-border overflow-y-auto">
-      <div className="p-4 space-y-4">
+    <div className="w-full md:w-80 h-auto md:h-full bg-card border-t md:border-t-0 md:border-l border-border overflow-y-visible md:overflow-y-auto">
+      <div className="p-3 sm:p-4 space-y-4">
         <div className="flex items-center space-x-2 pb-2 border-b border-border">
           <Activity className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Live Metrics</h2>
