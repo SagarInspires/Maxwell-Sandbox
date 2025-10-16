@@ -280,7 +280,7 @@ function App() {
   };
   
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-background overflow-y-auto md:overflow-hidden">
       <Toolbar
         isPlaying={isPlaying}
         onTogglePlay={() => setIsPlaying(!isPlaying)}
@@ -294,7 +294,7 @@ function App() {
         onExport={handleExport}
       />
       
-      <div className="flex flex-1 overflow-hidden">
+  <div className="flex flex-1 overflow-y-auto md:overflow-hidden flex-col md:flex-row gap-4 md:gap-0">
         <ControlPanel
           onAddSource={handleAddSource}
           onAddObstacle={handleAddObstacle}
@@ -308,7 +308,7 @@ function App() {
         />
         
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-3 sm:p-4">
             <SimulationCanvas
               isPlaying={isPlaying}
               solver={solver}

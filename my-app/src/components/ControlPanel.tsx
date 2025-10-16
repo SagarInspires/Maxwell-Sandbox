@@ -108,8 +108,8 @@ export function ControlPanel({
   };
   
   return (
-    <div className="w-80 h-full bg-card border-r border-border overflow-y-auto">
-      <div className="p-4 space-y-4">
+    <div className="w-full md:w-80 h-auto md:h-full bg-card border-b md:border-b-0 md:border-r border-border overflow-y-visible md:overflow-y-auto">
+      <div className="p-3 sm:p-4 space-y-4">
         <div className="flex items-center space-x-2 pb-2 border-b border-border">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
           <h2 className="text-lg font-semibold text-foreground">Control Panel</h2>
