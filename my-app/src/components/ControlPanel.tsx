@@ -40,6 +40,7 @@ export function ControlPanel({
   const [frequency, setFrequency] = useState(5e9); // 5 GHz
   const [amplitude, setAmplitude] = useState(1.0);
   const [phase, setPhase] = useState(0);
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 50, y: 75 });
   const [wireLength, setWireLength] = useState(30);
   const [wireAngle, setWireAngle] = useState(0);
   const [charge, setCharge] = useState(1e-9); // 1 nC
@@ -56,8 +57,8 @@ export function ControlPanel({
   const handleAddSource = () => {
     const baseSource = {
       type: sourceType,
-      x: 50,
-      y: 50,
+      x: position.x,
+      y: position.y,
       frequency,
       amplitude,
       phase
@@ -207,6 +208,49 @@ export function ControlPanel({
                       className="mt-2"
                     />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="source-x" className="text-xs">Position X</Label>
+                      <Input
+                        id="source-x"
+                        type="number"
+                        value={position.x}
+                        onChange={(e) => {
+                          const value = Number(e.target.value);
+                          if (!Number.isNaN(value)) {
+                            setPosition((prev) => ({
+                              ...prev,
+                              x: Math.max(0, Math.min(249, value))
+                            }));
+                          }
+                        }}
+                        className="h-8 text-xs"
+                        min={0}
+                        max={249}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="source-y" className="text-xs">Position Y</Label>
+                      <Input
+                        id="source-y"
+                        type="number"
+                        value={position.y}
+                        onChange={(e) => {
+                          const value = Number(e.target.value);
+                          if (!Number.isNaN(value)) {
+                            setPosition((prev) => ({
+                              ...prev,
+                              y: Math.max(0, Math.min(149, value))
+                            }));
+                          }
+                        }}
+                        className="h-8 text-xs"
+                        min={0}
+                        max={149}
+                      />
+                    </div>
+                  </div>
                   
                   {/* Wire-specific controls */}
                   {sourceType === 'wire' && (
@@ -342,7 +386,7 @@ export function ControlPanel({
                           <div className="text-xs">
                             <div className="font-medium capitalize">{source.type.split('-').join(' ')}</div>
                             <div className="text-muted-foreground">
-                              {(source.frequency / 1e9).toFixed(1)} GHz
+                              {(source.frequency / 1e9).toFixed(1)} GHz • ({Math.round(source.x)}, {Math.round(source.y)})
                             </div>
                           </div>
                         </div>
