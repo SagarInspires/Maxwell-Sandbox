@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MaxwellSolver } from '../lib/maxwell-solver';
@@ -11,6 +11,15 @@ interface SimulationCanvasProps {
   onFieldClick?: (x: number, y: number) => void;
 }
 
+type CaptureOptions = {
+  format?: 'image/png' | 'image/jpeg';
+  quality?: number;
+};
+
+export interface SimulationCanvasHandle {
+  captureFrame: (options?: CaptureOptions) => Promise<Blob>;
+}
+
 /**
  * SimulationCanvas: WebGL/Three.js visualization of EM fields
  * 
@@ -19,13 +28,13 @@ interface SimulationCanvasProps {
  * - Optional vector field arrows
  * - Interactive camera controls
  */
-export function SimulationCanvas({ 
+export const SimulationCanvas = forwardRef<SimulationCanvasHandle, SimulationCanvasProps>(function SimulationCanvas({ 
   isPlaying, 
   solver, 
   fieldMode, 
   showVectors,
   onFieldClick 
-}: SimulationCanvasProps) {
+}, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
@@ -34,28 +43,122 @@ export function SimulationCanvas({
   const meshRef = useRef<THREE.Mesh | null>(null);
   const vectorGroupRef = useRef<THREE.Group | null>(null);
   const animationFrameRef = useRef<number>(0);
-  
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  // Update vector field visualization
+  const updateVectorField = useCallback(() => {
+    if (!solver || !vectorGroupRef.current) return;
+
+    // Clear existing vectors
+    while (vectorGroupRef.current.children.length > 0) {
+      vectorGroupRef.current.remove(vectorGroupRef.current.children[0]);
+    }
+
+    const params = solver.getParams();
+    const fields = solver.getFields();
+    const stride = 8; // Show vectors at every 8th grid point
+
+    for (let j = 0; j < params.ny; j += stride) {
+      for (let i = 0; i < params.nx; i += stride) {
+        const idx = j * params.nx + i;
+        const Hx = fields.Hx[idx];
+        const Hy = fields.Hy[idx];
+        const magnitude = Math.sqrt(Hx * Hx + Hy * Hy);
+
+        if (magnitude > 0.001) {
+          const dir = new THREE.Vector3(Hy, -Hx, 0).normalize();
+          const origin = new THREE.Vector3(i, j, 0.5);
+          const length = Math.min(magnitude * 5, stride * 0.8);
+          const color = 0x00ffff;
+
+          const arrow = new THREE.ArrowHelper(dir, origin, length, color, length * 0.2, length * 0.15);
+          vectorGroupRef.current.add(arrow);
+        }
+      }
+    }
+  }, [solver]);
+
+  useImperativeHandle(ref, () => ({
+    captureFrame: (options?: CaptureOptions) => {
+      return new Promise<Blob>((resolve, reject) => {
+        const renderer = rendererRef.current;
+        const scene = sceneRef.current;
+        const camera = cameraRef.current;
+
+        if (!renderer || !scene || !camera) {
+          reject(new Error('Visualization is not ready yet.'));
+          return;
+        }
+
+        renderer.render(scene, camera);
+        const canvas = renderer.domElement;
+        const format = options?.format ?? 'image/png';
+        const quality = options?.quality;
+
+        if (canvas.toBlob) {
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Canvas capture returned empty data.'));
+              return;
+            }
+            resolve(blob);
+          }, format, quality);
+          return;
+        }
+
+        try {
+          const dataUrl = canvas.toDataURL(format, quality);
+          const base64 = dataUrl.split(',')[1];
+          if (!base64) {
+            reject(new Error('Failed to serialize canvas output.'));
+            return;
+          }
+          const byteString = atob(base64);
+          const arrayBuffer = new ArrayBuffer(byteString.length);
+          const uintArray = new Uint8Array(arrayBuffer);
+          for (let i = 0; i < byteString.length; i++) {
+            uintArray[i] = byteString.charCodeAt(i);
+          }
+          resolve(new Blob([uintArray], { type: format }));
+        } catch (error) {
+          reject(error instanceof Error ? error : new Error('Unknown capture error.'));
+        }
+      });
+    }
+  }), []);
   
   useEffect(() => {
     if (!containerRef.current || !solver) return;
-    
+
     const container = containerRef.current;
     const { width, height } = container.getBoundingClientRect();
-    setDimensions({ width, height });
-    
+    const params = solver.getParams();
+    const aspect = width / Math.max(height, 1);
+    const gridAspect = params.nx / params.ny;
+
+    const computeFrustum = () => {
+      if (aspect >= gridAspect) {
+        const frustumHeight = params.ny;
+        return {
+          frustumWidth: frustumHeight * aspect,
+          frustumHeight
+        };
+      }
+
+      const frustumWidth = params.nx;
+      return {
+        frustumWidth,
+        frustumHeight: frustumWidth / aspect
+      };
+    };
+
+    const { frustumWidth, frustumHeight } = computeFrustum();
+
     // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0a0a0f);
     sceneRef.current = scene;
     
     // Camera setup (orthographic for perfect 2D rectangular view)
-    const params = solver.getParams();
-    const aspect = width / height;
-    // Use ny (height) as base for frustum to ensure proper rectangular display
-    const frustumHeight = params.ny;
-    const frustumWidth = frustumHeight * aspect;
-    
     const camera = new THREE.OrthographicCamera(
       -frustumWidth / 2,
       frustumWidth / 2,
@@ -90,6 +193,8 @@ export function SimulationCanvas({
       MIDDLE: THREE.MOUSE.DOLLY,
       RIGHT: THREE.MOUSE.PAN
     };
+    controls.target.set(params.nx / 2, params.ny / 2, 0);
+    controls.update();
     controlsRef.current = controls;
     
     // Create field visualization plane
@@ -184,20 +289,27 @@ export function SimulationCanvas({
     
     // Resize handler
     const handleResize = () => {
-      const { width, height } = container.getBoundingClientRect();
-      setDimensions({ width, height });
+      const { width: newWidth, height: newHeight } = container.getBoundingClientRect();
+      const newAspect = newWidth / Math.max(newHeight, 1);
+
+      let nextFrustumWidth: number;
+      let nextFrustumHeight: number;
+
+      if (newAspect >= gridAspect) {
+        nextFrustumHeight = params.ny;
+        nextFrustumWidth = nextFrustumHeight * newAspect;
+      } else {
+        nextFrustumWidth = params.nx;
+        nextFrustumHeight = nextFrustumWidth / newAspect;
+      }
       
-      const aspect = width / height;
-      const frustumHeight = params.ny;
-      const frustumWidth = frustumHeight * aspect;
-      
-      camera.left = -frustumWidth / 2;
-      camera.right = frustumWidth / 2;
-      camera.top = frustumHeight / 2;
-      camera.bottom = -frustumHeight / 2;
+      camera.left = -nextFrustumWidth / 2;
+      camera.right = nextFrustumWidth / 2;
+      camera.top = nextFrustumHeight / 2;
+      camera.bottom = -nextFrustumHeight / 2;
       camera.updateProjectionMatrix();
       
-      renderer.setSize(width, height);
+      renderer.setSize(newWidth, newHeight);
     };
     
     window.addEventListener('resize', handleResize);
@@ -214,13 +326,13 @@ export function SimulationCanvas({
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
       window.removeEventListener('resize', handleResize);
-      renderer.domElement.removeEventListener('click', handleClick);
+  renderer.domElement.removeEventListener('click', handleClick);
       container.removeChild(renderer.domElement);
       renderer.dispose();
       geometry.dispose();
       material.dispose();
     };
-  }, [solver]);
+  }, [solver, onFieldClick]);
   
   // Update field visualization
   useEffect(() => {
@@ -281,40 +393,7 @@ export function SimulationCanvas({
     const interval = setInterval(updateFields, 1000 / 60); // 60 FPS
     
     return () => clearInterval(interval);
-  }, [isPlaying, solver, fieldMode, showVectors]);
-  
-  // Update vector field visualization
-  const updateVectorField = () => {
-    if (!solver || !vectorGroupRef.current) return;
-    
-    // Clear existing vectors
-    while (vectorGroupRef.current.children.length > 0) {
-      vectorGroupRef.current.remove(vectorGroupRef.current.children[0]);
-    }
-    
-    const params = solver.getParams();
-    const fields = solver.getFields();
-    const stride = 8; // Show vectors at every 8th grid point
-    
-    for (let j = 0; j < params.ny; j += stride) {
-      for (let i = 0; i < params.nx; i += stride) {
-        const idx = j * params.nx + i;
-        const Hx = fields.Hx[idx];
-        const Hy = fields.Hy[idx];
-        const magnitude = Math.sqrt(Hx * Hx + Hy * Hy);
-        
-        if (magnitude > 0.001) {
-          const dir = new THREE.Vector3(Hy, -Hx, 0).normalize();
-          const origin = new THREE.Vector3(i, j, 0.5);
-          const length = Math.min(magnitude * 5, stride * 0.8);
-          const color = 0x00ffff;
-          
-          const arrow = new THREE.ArrowHelper(dir, origin, length, color, length * 0.2, length * 0.15);
-          vectorGroupRef.current.add(arrow);
-        }
-      }
-    }
-  };
+  }, [isPlaying, solver, fieldMode, showVectors, updateVectorField]);
   
   return (
     <div 
@@ -323,4 +402,4 @@ export function SimulationCanvas({
       style={{ minHeight: '500px', aspectRatio: '5/3' }}
     />
   );
-}
+});

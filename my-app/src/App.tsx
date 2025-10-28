@@ -1,14 +1,83 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { MaxwellSolver } from './lib/maxwell-solver';
 import type { Source } from './lib/maxwell-solver';
 import type { Obstacle } from './lib/maxwell-solver';
-import { SimulationCanvas } from './components/SimulationCanvas';
+import { SimulationCanvas, type SimulationCanvasHandle } from './components/SimulationCanvas';
 import { ControlPanel } from './components/ControlPanel';
 import { MetricsPanel } from './components/MetricsPanel';
 import { Toolbar } from './components/Toolbar';
 import { getExperimentById } from './lib/experiments';
 import { getHistoricalExperimentById } from './lib/historical-experiments';
 import { toast } from 'sonner';
+
+type ExtendedWindow = Window & { webkitAudioContext?: typeof AudioContext };
+
+type ExportReport = {
+  createdAt: string;
+  simulationTime: number;
+  fieldMode: 'Ez' | 'Hx' | 'Hy' | 'Poynting' | 'Intensity';
+  showVectors: boolean;
+  grid: {
+    nx: number;
+    ny: number;
+    dx: number;
+    dy: number;
+    dt: number;
+  };
+  metrics: {
+    maxIntensity: number;
+    avgIntensity: number;
+    maxPoynting: number;
+    totalEnergy: number;
+  };
+  sources: Source[];
+  obstacles: Obstacle[];
+};
+
+const buildExportReport = (
+  solver: MaxwellSolver,
+  fieldMode: 'Ez' | 'Hx' | 'Hy' | 'Poynting' | 'Intensity',
+  showVectors: boolean
+): ExportReport => {
+  const intensity = solver.getIntensity();
+  const poynting = solver.getPoyntingVector();
+
+  let maxIntensity = 0;
+  let sumIntensity = 0;
+  let maxPoynting = 0;
+
+  for (let i = 0; i < intensity.length; i++) {
+    const currentIntensity = intensity[i];
+    const currentPoynting = poynting[i];
+    if (currentIntensity > maxIntensity) maxIntensity = currentIntensity;
+    if (currentPoynting > maxPoynting) maxPoynting = currentPoynting;
+    sumIntensity += currentIntensity;
+  }
+
+  const params = solver.getParams();
+
+  return {
+    createdAt: new Date().toISOString(),
+    simulationTime: solver.getTime(),
+    fieldMode,
+    showVectors,
+    grid: {
+      nx: params.nx,
+      ny: params.ny,
+      dx: params.dx,
+      dy: params.dy,
+      dt: params.dt
+    },
+    metrics: {
+      maxIntensity,
+      avgIntensity: intensity.length ? sumIntensity / intensity.length : 0,
+      maxPoynting,
+      totalEnergy: sumIntensity
+    },
+    sources: solver.getSources().map(source => ({ ...source })),
+    obstacles: solver.getObstacles().map(obstacle => ({ ...obstacle }))
+  };
+};
 
 /**
  * Maxwell Sandbox - Main Application
@@ -28,6 +97,7 @@ function App() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
+  const simulationRef = useRef<SimulationCanvasHandle | null>(null);
   
   // Initialize solver
   useEffect(() => {
@@ -60,7 +130,16 @@ function App() {
   // Audio sonification
   useEffect(() => {
     if (audioEnabled && !audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const extendedWindow = window as ExtendedWindow;
+      const AudioConstructor = window.AudioContext || extendedWindow.webkitAudioContext;
+      if (!AudioConstructor) {
+        toast.error('Audio unavailable', {
+          description: 'Web Audio API is not supported in this browser.'
+        });
+        return;
+      }
+
+      audioContextRef.current = new AudioConstructor();
       oscillatorRef.current = audioContextRef.current.createOscillator();
       gainNodeRef.current = audioContextRef.current.createGain();
       
@@ -166,19 +245,57 @@ function App() {
     toast.info('Simulation reset');
   };
   
-  const handleExport = () => {
-    toast.info('Export feature', {
-      description: 'Screenshot export will be implemented'
-    });
+  const handleExport = async () => {
+    if (!simulationRef.current || !solver) {
+      toast.error('Export unavailable', {
+        description: 'Visualization or solver is not ready yet.'
+      });
+      return;
+    }
+
+    try {
+      const frameBlob = await simulationRef.current.captureFrame();
+      const report = buildExportReport(solver, fieldMode, showVectors);
+      const metricsBlob = new Blob([JSON.stringify(report, null, 2)], {
+        type: 'application/json'
+      });
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const frameFilename = `maxwell-sandbox-${timestamp}.png`;
+      const metricsFilename = `maxwell-sandbox-${timestamp}.metrics.json`;
+
+      const downloadBlob = (blob: Blob, filename: string) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      };
+
+      downloadBlob(frameBlob, frameFilename);
+      downloadBlob(metricsBlob, metricsFilename);
+
+      toast.success('Export complete', {
+        description: `Saved ${frameFilename} and ${metricsFilename}`
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error('Export failed', {
+        description: message
+      });
+    }
   };
   
-  const handleFieldClick = (x: number, y: number) => {
+  const handleFieldClick = useCallback((x: number, y: number) => {
     if (!solver) return;
     const field = solver.getFieldAt(x, y);
     toast.info(`Field at (${x.toFixed(0)}, ${y.toFixed(0)})`, {
       description: `Ez: ${field.Ez.toFixed(4)}, Hx: ${field.Hx.toFixed(4)}, Hy: ${field.Hy.toFixed(4)}`
     });
-  };
+  }, [solver]);
   
   const handleLoadExperiment = (experimentId: string) => {
     if (!solver) return;
@@ -315,6 +432,7 @@ function App() {
               fieldMode={fieldMode}
               showVectors={showVectors}
               onFieldClick={handleFieldClick}
+              ref={simulationRef}
             />
           </div>
         </div>
