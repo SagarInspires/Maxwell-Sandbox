@@ -74,6 +74,9 @@ export class MaxwellSolver {
   private readonly c0 = 299792458; // Speed of light (m/s)
   private readonly eps0 = 8.854187817e-12; // Vacuum permittivity
   private readonly mu0 = 4 * Math.PI * 1e-7; // Vacuum permeability
+  private readonly pmlThickness = 20; // Grid cells dedicated to PML boundaries
+  private readonly pmlOrder = 3;
+  private readonly pmlReflection = 1e-6;
   
   constructor(params: GridParams) {
     this.params = params;
@@ -95,6 +98,7 @@ export class MaxwellSolver {
     this.Da = new Float32Array(size);
     this.Db = new Float32Array(size);
     
+    this.setupPML();
     this.updateCoefficients();
   }
   
@@ -119,6 +123,50 @@ export class MaxwellSolver {
         // H-field coefficients
         this.Da[idx] = 1.0;
         this.Db[idx] = dt / mu_val;
+      }
+    }
+  }
+
+  /**
+   * Initialize perfectly matched layer (PML) absorbing boundary regions.
+   * Adds graded conductivity near the simulation edges to attenuate outgoing waves
+   * before they reach the hard walls, reducing artificial reflections.
+   */
+  private setupPML(): void {
+    const { nx, ny, dx, dy } = this.params;
+    const thickness = Math.min(this.pmlThickness, Math.floor(Math.min(nx, ny) / 4));
+    if (thickness <= 0) return;
+
+    const eta0 = Math.sqrt(this.mu0 / this.eps0);
+    const sigmaMaxX = -(this.pmlOrder + 1) * Math.log(this.pmlReflection) / (2 * eta0 * thickness * dx);
+    const sigmaMaxY = -(this.pmlOrder + 1) * Math.log(this.pmlReflection) / (2 * eta0 * thickness * dy);
+
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const idx = j * nx + i;
+
+        let sigmaX = 0;
+        if (i < thickness) {
+          const ratio = (thickness - i) / thickness;
+          sigmaX = sigmaMaxX * Math.pow(ratio, this.pmlOrder);
+        } else if (i >= nx - thickness) {
+          const ratio = (i - (nx - thickness - 1)) / thickness;
+          sigmaX = sigmaMaxX * Math.pow(Math.min(ratio, 1), this.pmlOrder);
+        }
+
+        let sigmaY = 0;
+        if (j < thickness) {
+          const ratio = (thickness - j) / thickness;
+          sigmaY = sigmaMaxY * Math.pow(ratio, this.pmlOrder);
+        } else if (j >= ny - thickness) {
+          const ratio = (j - (ny - thickness - 1)) / thickness;
+          sigmaY = sigmaMaxY * Math.pow(Math.min(ratio, 1), this.pmlOrder);
+        }
+
+        const pmlSigma = sigmaX + sigmaY;
+        if (pmlSigma > 0) {
+          this.sigma[idx] = Math.max(this.sigma[idx], pmlSigma);
+        }
       }
     }
   }
@@ -173,7 +221,7 @@ export class MaxwellSolver {
    * Apply source excitations at current time step
    */
   private applySources(): void {
-    const { nx, ny, dt, dx, dy } = this.params;
+  const { nx, ny, dt } = this.params;
     const omega = 2 * Math.PI;
     
     for (const source of this.sources) {
@@ -369,9 +417,10 @@ export class MaxwellSolver {
    * Add an obstacle with specific material properties
    */
   public addObstacle(obstacle: Obstacle): void {
-    this.obstacles.push(obstacle);
-    this.applyObstacle(obstacle);
-    this.updateCoefficients();
+  this.obstacles.push(obstacle);
+  this.applyObstacle(obstacle);
+  this.setupPML();
+  this.updateCoefficients();
   }
   
   /**
@@ -380,9 +429,10 @@ export class MaxwellSolver {
   public removeObstacle(id: string): void {
     const obstacle = this.obstacles.find(o => o.id === id);
     if (obstacle) {
-      this.removeObstacleMaterial(obstacle);
-      this.obstacles = this.obstacles.filter(o => o.id !== id);
-      this.updateCoefficients();
+  this.removeObstacleMaterial(obstacle);
+  this.obstacles = this.obstacles.filter(o => o.id !== id);
+  this.setupPML();
+  this.updateCoefficients();
     }
   }
   
@@ -437,7 +487,8 @@ export class MaxwellSolver {
     this.Ez.fill(0);
     this.Hx.fill(0);
     this.Hy.fill(0);
-    this.time = 0;
+  this.time = 0;
+  this.setupPML();
   }
   
   /**
