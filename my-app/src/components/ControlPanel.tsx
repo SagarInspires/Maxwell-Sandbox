@@ -11,6 +11,7 @@ import { Plus, Radio, Waves, Antenna, Sparkles, Box, Cable, Zap, Magnet as Magne
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { EXPERIMENT_PRESETS, getExperimentsByCategory } from '../lib/experiments';
 import { ExperimentTimeline } from './ExperimentTimeline';
+import { ScrollArea } from './ui/scroll-area';
 
 interface ControlPanelProps {
   onAddSource: (source: Omit<Source, 'id'>) => void;
@@ -523,7 +524,7 @@ export function ControlPanel({
             )}
           </TabsContent>
           
-          <TabsContent value="presets" className="space-y-4 mt-4">
+          <TabsContent value="presets" className="mt-4">
             <Card className="bg-muted/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -531,29 +532,31 @@ export function ControlPanel({
                   Modern EM Experiments
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                {EXPERIMENT_PRESETS.map((experiment) => (
-                  <Card key={experiment.id} className="bg-background/50 hover:bg-background/80 transition-colors">
-                    <CardContent className="p-3">
-                      <div className="space-y-2">
-                        <div>
-                          <h4 className="text-xs font-semibold">{experiment.name}</h4>
-                          <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
-                            {experiment.description}
-                          </p>
+              <ScrollArea className="h-[50rem] max-h-[60vh] pr-2">
+                <CardContent className="space-y-2">
+                  {EXPERIMENT_PRESETS.map((experiment) => (
+                    <Card key={experiment.id} className="bg-background/50 hover:bg-background/80 transition-colors">
+                      <CardContent className="p-3">
+                        <div className="space-y-2">
+                          <div>
+                            <h4 className="text-xs font-semibold">{experiment.name}</h4>
+                            <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">
+                              {experiment.description}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => onLoadExperiment?.(experiment.id)}
+                            className="w-full h-7 text-xs"
+                          >
+                            Load
+                          </Button>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => onLoadExperiment?.(experiment.id)}
-                          className="w-full h-7 text-xs"
-                        >
-                          Load
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </CardContent>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </CardContent>
+              </ScrollArea>
             </Card>
           </TabsContent>
           

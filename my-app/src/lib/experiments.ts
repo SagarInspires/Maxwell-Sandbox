@@ -134,7 +134,7 @@ export const EXPERIMENT_PRESETS: ExperimentPreset[] = [
       { type: 'plane-wave', x: 30, y: 75, frequency: 5e9, amplitude: 1.0, phase: 0 }
     ],
     obstacles: [
-      { x: 90, y: 60, width: 20, height: 30, material: { epsilon: 9.0, mu: 1, sigma: 0 } }
+      { x: 90, y: 5, width: 50, height: 230, material: { epsilon: 9.0, mu: 1, sigma: 0 } }
     ],
     recommendedSettings: {
       fieldMode: 'Intensity',
